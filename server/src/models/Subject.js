@@ -14,10 +14,10 @@ const subjectSchema = new mongoose.Schema(
       trim: true,
     },
 
-    credits: {
-      type: Number,
-      required: true,
-      min: 0,
+    faculty: {
+      type: String,
+      default: "",
+      trim: true,
     },
 
     attendance: {
@@ -25,6 +25,37 @@ const subjectSchema = new mongoose.Schema(
       default: 0,
       min: 0,
       max: 100,
+    },
+
+    marks: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+
+    credits: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    classes: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    attended: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    status: {
+      type: String,
+      enum: ["Stable", "Watch", "Critical"],
+      default: "Stable",
     },
   },
   {

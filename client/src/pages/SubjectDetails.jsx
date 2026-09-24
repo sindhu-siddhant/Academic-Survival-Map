@@ -1,60 +1,66 @@
+import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router-dom"
-
-const subjects = {
-  "CS-301": {
-    code: "CS-301",
-    name: "Data Structures",
-    faculty: "Dr. A. Sharma",
-    attendance: 82,
-    marks: 78,
-    credits: 4,
-    classes: 42,
-    attended: 34,
-    status: "Stable",
-  },
-  "CS-302": {
-    code: "CS-302",
-    name: "Database Systems",
-    faculty: "Prof. R. Mehta",
-    attendance: 68,
-    marks: 71,
-    credits: 4,
-    classes: 38,
-    attended: 26,
-    status: "Watch",
-  },
-  "CS-303": {
-    code: "CS-303",
-    name: "Operating Systems",
-    faculty: "Dr. P. Kumar",
-    attendance: 91,
-    marks: 84,
-    credits: 4,
-    classes: 45,
-    attended: 41,
-    status: "Stable",
-  },
-  "MA-301": {
-    code: "MA-301",
-    name: "Engineering Mathematics",
-    faculty: "Dr. S. Gupta",
-    attendance: 61,
-    marks: 59,
-    credits: 4,
-    classes: 41,
-    attended: 25,
-    status: "Critical",
-  },
-}
 
 function SubjectDetails() {
   const { code } = useParams()
-  const subject = subjects[code?.toUpperCase()]
 
-  if (!subject) {
+  const [subject, setSubject] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    const fetchSubject = async () => {
+      try {
+        const response = await fetch(
+          "http://localhost:5000/api/subjects",
+        )
+
+        const result = await response.json()
+
+        if (!response.ok || !result.success) {
+          throw new Error(
+            result.message || "Failed to fetch subjects",
+          )
+        }
+
+        const foundSubject = result.data.find(
+          (item) =>
+            item.code?.toUpperCase() === code?.toUpperCase(),
+        )
+
+        if (!foundSubject) {
+          setError("Subject not found.")
+          return
+        }
+
+        setSubject(foundSubject)
+      } catch (error) {
+        console.error("Failed to fetch subject:", error)
+        setError("Failed to load subject.")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchSubject()
+  }, [code])
+
+  if (loading) {
     return (
-      <div className="page-reveal min-h-screen bg-[#0b0a12] p-10">
-        <h1 className="text-5xl">Subject not found.</h1>
+      <div className="flex min-h-screen items-center justify-center bg-[#0b0a12] text-[#f5f3ff]">
+        <p className="text-xs uppercase tracking-[0.3em] text-[#9691a5]">
+          Loading subject...
+        </p>
+      </div>
+    )
+  }
+
+  if (error || !subject) {
+    return (
+      <div className="page-reveal min-h-screen bg-[#0b0a12] p-10 text-[#f5f3ff]">
+        <h1 className="text-5xl">
+          {error || "Subject not found."}
+        </h1>
 
         <Link
           to="/subjects"
@@ -69,18 +75,15 @@ function SubjectDetails() {
   const classesNeeded = Math.max(
     0,
     Math.ceil(
-      (0.75 * subject.classes - subject.attended) / 0.25
-    )
+      (0.75 * subject.classes - subject.attended) / 0.25,
+    ),
   )
 
   return (
     <div className="min-h-screen bg-[#0b0a12] text-[#f5f3ff]">
-
       {/* HEADER */}
       <section className="border-b border-white/10 p-6 md:p-10">
-
         <div className="mb-20 flex items-center justify-between">
-
           <p className="text-xs uppercase tracking-[0.3em] text-[#9691a5]">
             {subject.code}
           </p>
@@ -91,7 +94,6 @@ function SubjectDetails() {
           >
             ← All subjects
           </Link>
-
         </div>
 
         <p className="mb-5 text-xs uppercase tracking-[0.3em] text-[#9691a5]">
@@ -107,12 +109,10 @@ function SubjectDetails() {
           <span>{subject.credits} credits</span>
           <span>{subject.status}</span>
         </div>
-
       </section>
 
       {/* KEY NUMBERS */}
       <section className="grid grid-cols-2 border-b border-white/10 md:grid-cols-4">
-
         <Metric
           number={`${subject.attendance}%`}
           label="Attendance"
@@ -132,14 +132,11 @@ function SubjectDetails() {
           number={subject.classes}
           label="Total classes"
         />
-
       </section>
 
       {/* ATTENDANCE */}
       <section className="grid border-b border-white/10 md:grid-cols-2">
-
         <div className="border-b border-white/10 p-6 md:border-b-0 md:border-r md:p-10">
-
           <p className="mb-16 text-xs uppercase tracking-[0.3em] text-[#9691a5]">
             Attendance status
           </p>
@@ -147,18 +144,15 @@ function SubjectDetails() {
           <div className="text-[20vw] leading-none tracking-[-0.1em] md:text-[12vw]">
             {subject.attendance}%
           </div>
-
         </div>
 
         <div className="flex flex-col justify-end p-6 md:p-10">
-
           <div className="mb-5 flex justify-between text-xs uppercase tracking-widest">
             <span>Current</span>
             <span>Minimum 75%</span>
           </div>
 
           <div className="h-3 bg-[#8b5cf6]/10">
-
             <div
               className={`h-full ${
                 subject.attendance < 75
@@ -169,7 +163,6 @@ function SubjectDetails() {
                 width: `${Math.min(subject.attendance, 100)}%`,
               }}
             />
-
           </div>
 
           <p className="mt-8 max-w-md text-2xl leading-tight tracking-[-0.03em]">
@@ -177,16 +170,12 @@ function SubjectDetails() {
               ? "You're currently above the minimum attendance requirement."
               : `You are below the minimum requirement. You need approximately ${classesNeeded} consecutive classes to reach the 75% threshold.`}
           </p>
-
         </div>
-
       </section>
 
       {/* PERFORMANCE */}
       <section className="grid border-b border-white/10 md:grid-cols-2">
-
         <div className="border-b border-white/10 p-6 md:border-b-0 md:border-r md:p-10">
-
           <p className="mb-16 text-xs uppercase tracking-[0.3em] text-[#9691a5]">
             Performance
           </p>
@@ -198,48 +187,39 @@ function SubjectDetails() {
             <br />
             standing.
           </h2>
-
         </div>
 
         <div className="flex flex-col justify-end p-6 md:p-10">
-
           <div className="mb-5 flex justify-between text-xs uppercase tracking-widest">
             <span>Marks</span>
             <span>{subject.marks}%</span>
           </div>
 
           <div className="h-3 bg-[#8b5cf6]/10">
-
             <div
               className="h-full bg-[#8b5cf6]"
               style={{
                 width: `${subject.marks}%`,
               }}
             />
-
           </div>
 
           <p className="mt-8 text-sm leading-6 text-[#9691a5]">
             This value will eventually be calculated from your
             actual assessments, quizzes and examinations.
           </p>
-
         </div>
-
       </section>
 
       {/* FOOTER */}
       <section className="p-6 md:p-10">
-
         <Link
           to="/subjects"
           className="inline-block rounded-full bg-[#8b5cf6] px-7 py-4 text-sm text-white hover:scale-105"
         >
           ← Back to subjects
         </Link>
-
       </section>
-
     </div>
   )
 }
@@ -247,7 +227,6 @@ function SubjectDetails() {
 function Metric({ number, label }) {
   return (
     <div className="border-r border-white/10 p-6 last:border-r-0 md:p-8">
-
       <p className="text-4xl tracking-[-0.05em] md:text-5xl">
         {number}
       </p>
@@ -255,7 +234,6 @@ function Metric({ number, label }) {
       <p className="mt-8 text-xs uppercase tracking-[0.2em] text-[#9691a5]">
         {label}
       </p>
-
     </div>
   )
 }
